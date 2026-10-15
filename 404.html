@@ -106,26 +106,6 @@
             font-size: 16px;
             text-align: center;
         }
-
-        /* 临时诊断面板：仅当壳链接带 ?debug=1 时显示，生产环境不显示 */
-        #diagPanel {
-            position: fixed;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            z-index: 99;
-            max-height: 45%;
-            overflow: auto;
-            margin: 0;
-            padding: 8px 10px;
-            background: rgba(0, 0, 0, 0.88);
-            color: #33ff66;
-            font-size: 11px;
-            line-height: 1.5;
-            white-space: pre-wrap;
-            word-break: break-all;
-            display: none;
-        }
     </style>
 </head>
 
@@ -141,8 +121,6 @@
             <div class="load-error-tip">请检查网络后重新进入</div>
         </div>
     </div>
-    <!-- 临时诊断面板（默认隐藏，?debug=1 时显示） -->
-    <pre id="diagPanel"></pre>
     <script>
         (function () {
             var LIVE_ORIGIN = 'https://live.xjcm2026.top';
@@ -152,11 +130,6 @@
 
             /* 加载超时定时器 */
             var loadTimer = null;
-
-            /* 是否开启诊断面板（壳链接带 ?debug=1） */
-            var diagEnabled =
-                new URLSearchParams(
-                    window.location.search).get('debug') === '1';
 
             var oauthCode = '';
 
@@ -339,27 +312,6 @@
                     }
 
                     /*
-                     * 接收内页的诊断上报（仅 ?debug=1 时显示）
-                     * 用于定位微信内黑屏卡在哪一步
-                     */
-                    if (data.type === 'diag' && diagEnabled) {
-                        var diagPanel =
-                            document.getElementById(
-                                'diagPanel');
-
-                        if (diagPanel) {
-                            diagPanel.textContent =
-                                '[内页] ' +
-                                String(data.text || '');
-
-                            diagPanel.style.display =
-                                'block';
-                        }
-
-                        return;
-                    }
-
-                    /*
                      * 接收直播名称和描述
                      */
                     if (
@@ -476,6 +428,12 @@
                 targetUrl += '&debugwx=1';
             }
 
+            // 调试参数透传：?debug=1 时让内页自行显示诊断浮层
+            if (new URLSearchParams(
+                window.location.search).get('debug') === '1') {
+                targetUrl += '&debug=1';
+            }
+
             // 支付返回：通知 room.php 直接播放直播画面，不再显示“点击观看”按钮
             if (payResult) {
                 targetUrl += '&autoplay=1';
@@ -507,23 +465,6 @@
              * 最后设置 iframe 地址
              */
             liveFrame.src = targetUrl;
-
-            /*
-             * 诊断模式：先显示面板，等待内页上报
-             */
-            if (diagEnabled) {
-                var initPanel =
-                    document.getElementById(
-                        'diagPanel');
-
-                if (initPanel) {
-                    initPanel.style.display = 'block';
-                    initPanel.textContent =
-                        '诊断已开启，等待内页上报...\n壳源=' +
-                        window.location.origin +
-                        '\n内页=' + targetUrl;
-                }
-            }
 
             /*
              * 加载失败兜底：超过 10 秒仍未收到内页的 live-ready 消息，
