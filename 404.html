@@ -428,12 +428,6 @@
                 targetUrl += '&debugwx=1';
             }
 
-            // 调试参数透传：?debug=1 时让内页自行显示诊断浮层
-            if (new URLSearchParams(
-                window.location.search).get('debug') === '1') {
-                targetUrl += '&debug=1';
-            }
-
             // 支付返回：通知 room.php 直接播放直播画面，不再显示“点击观看”按钮
             if (payResult) {
                 targetUrl += '&autoplay=1';
